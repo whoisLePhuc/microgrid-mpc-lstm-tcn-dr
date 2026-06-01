@@ -37,7 +37,8 @@ class Simulator:
         self.ems_mpc = EMSMPC(C_kwh=50.0, dt_h=1.0, N=24)
         self.config = config
 
-    def run_outer(self, scenario_name='S5', n_hours=168, df=None, forecast_func=None):
+    def run_outer(self, scenario_name='S5', n_hours=168, df=None, forecast_func=None,
+                  peak_penalty=None):
         from engine.scenarios import get_scenario
         sc = get_scenario(scenario_name)
         if df is None:
@@ -101,6 +102,8 @@ class Simulator:
                     # TOU: economic arbitrage + peak penalty
                     # Flat: only peak shaving (no price signal)
                     peak_pen = 0.3 if sc.use_tou else 0.5
+                    if peak_penalty is not None:
+                        peak_pen = peak_penalty
                     p_bat_opt, info = self.ems_mpc.solve(
                         p_net_fc, price_fc, soc_now=soc,
                         peak_penalty=peak_pen, p_peak=18.0)
