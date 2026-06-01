@@ -1,0 +1,250 @@
+{
+  "version": 1,
+  "title": "Lưu đồ thuật toán tổng thể",
+  "type": "academic-diagram",
+  "source": "generated",
+  "profile": "academic-paper",
+  "theme": "academic",
+  "layout": "vertical",
+  "counts": {
+    "nodes": 15,
+    "edges": 18,
+    "modules": 6
+  },
+  "nodes": [
+    {
+      "id": "sensors",
+      "label": "Cảm biến:\nVpv, Ipv, Vbat, Ibat,\nIwind, VDC, SOC",
+      "type": "service",
+      "module": "measurement"
+    },
+    {
+      "id": "lstm",
+      "label": "LSTM-TCN Model",
+      "type": "service",
+      "module": "forecast"
+    },
+    {
+      "id": "forecast_data",
+      "label": "Dự báo:\nĜHI, T̂emp, Ŵspd,\nL̂oad, P̂rice",
+      "type": "service",
+      "module": "forecast"
+    },
+    {
+      "id": "pms",
+      "label": "Power Management System\n6 modes M1–M6",
+      "type": "service",
+      "module": "decision"
+    },
+    {
+      "id": "dr_logic",
+      "label": "DR Logic 2 lớp\nPrice + Threshold",
+      "type": "service",
+      "module": "decision"
+    },
+    {
+      "id": "ref_currents",
+      "label": "Tính Reference Currents",
+      "type": "service",
+      "module": "decision"
+    },
+    {
+      "id": "sigmoid",
+      "label": "Sigmoid Integration",
+      "type": "service",
+      "module": "decision"
+    },
+    {
+      "id": "ltv_model",
+      "label": "Cập nhật LTV Model\n(A, B matrices)",
+      "type": "service",
+      "module": "mpc_layer"
+    },
+    {
+      "id": "qp_formulate",
+      "label": "Formulate QP\nH, f, Aineq, l, u",
+      "type": "service",
+      "module": "mpc_layer"
+    },
+    {
+      "id": "osqp_solver",
+      "label": "OSQP Solver\nmin ½zᵀHz + fᵀz",
+      "type": "service",
+      "module": "mpc_layer"
+    },
+    {
+      "id": "check",
+      "label": "Feasible?",
+      "type": "decision",
+      "module": "mpc_layer"
+    },
+    {
+      "id": "duty_cycles",
+      "label": "Duty Cycles\nUPV, Ubat, Uwind",
+      "type": "service",
+      "module": "actuation"
+    },
+    {
+      "id": "soft_constraints",
+      "label": "Soft Constraints\nThêm slack ε",
+      "type": "service",
+      "module": "actuation"
+    },
+    {
+      "id": "shift",
+      "label": "k = k + 1",
+      "type": "service",
+      "module": "update"
+    },
+    {
+      "id": "store",
+      "label": "Lưu trạng thái\nref_prev, Uprev",
+      "type": "service",
+      "module": "update"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "from": "sensors",
+      "to": "lstm",
+      "type": "primary",
+      "label": "Dữ liệu đo"
+    },
+    {
+      "id": "edge-2",
+      "from": "sensors",
+      "to": "pms",
+      "type": "primary",
+      "label": "Trạng thái"
+    },
+    {
+      "id": "edge-3",
+      "from": "lstm",
+      "to": "forecast_data",
+      "type": "primary"
+    },
+    {
+      "id": "edge-4",
+      "from": "forecast_data",
+      "to": "pms",
+      "type": "primary",
+      "label": "Dự báo"
+    },
+    {
+      "id": "edge-5",
+      "from": "forecast_data",
+      "to": "dr_logic",
+      "type": "primary",
+      "label": "Dự báo"
+    },
+    {
+      "id": "edge-6",
+      "from": "pms",
+      "to": "ref_currents",
+      "type": "primary"
+    },
+    {
+      "id": "edge-7",
+      "from": "dr_logic",
+      "to": "ref_currents",
+      "type": "primary"
+    },
+    {
+      "id": "edge-8",
+      "from": "ref_currents",
+      "to": "sigmoid",
+      "type": "primary"
+    },
+    {
+      "id": "edge-9",
+      "from": "sigmoid",
+      "to": "ltv_model",
+      "type": "primary"
+    },
+    {
+      "id": "edge-10",
+      "from": "ltv_model",
+      "to": "qp_formulate",
+      "type": "primary"
+    },
+    {
+      "id": "edge-11",
+      "from": "qp_formulate",
+      "to": "osqp_solver",
+      "type": "primary"
+    },
+    {
+      "id": "edge-12",
+      "from": "osqp_solver",
+      "to": "check",
+      "type": "primary"
+    },
+    {
+      "id": "edge-13",
+      "from": "check",
+      "to": "duty_cycles",
+      "type": "primary",
+      "label": "Yes"
+    },
+    {
+      "id": "edge-14",
+      "from": "check",
+      "to": "soft_constraints",
+      "type": "primary",
+      "label": "No"
+    },
+    {
+      "id": "edge-15",
+      "from": "soft_constraints",
+      "to": "qp_formulate",
+      "type": "primary",
+      "label": "Thư giãn ràng buộc"
+    },
+    {
+      "id": "edge-16",
+      "from": "duty_cycles",
+      "to": "shift",
+      "type": "primary"
+    },
+    {
+      "id": "edge-17",
+      "from": "shift",
+      "to": "store",
+      "type": "primary"
+    },
+    {
+      "id": "edge-18",
+      "from": "store",
+      "to": "sensors",
+      "type": "primary",
+      "label": "Vòng lặp k → k+1"
+    }
+  ],
+  "modules": [
+    {
+      "id": "measurement",
+      "label": "LỚP ĐO LƯỜNG"
+    },
+    {
+      "id": "forecast",
+      "label": "LỚP DỰ BÁO LSTM-TCN"
+    },
+    {
+      "id": "decision",
+      "label": "LỚP RA QUYẾT ĐỊNH"
+    },
+    {
+      "id": "mpc_layer",
+      "label": "LỚP MPC"
+    },
+    {
+      "id": "actuation",
+      "label": "LỚP CHẤP HÀNH"
+    },
+    {
+      "id": "update",
+      "label": "CẬP NHẬT"
+    }
+  ]
+}

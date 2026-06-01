@@ -1,0 +1,172 @@
+meta:
+  profile: academic-paper
+  figureType: workflow
+  theme: academic
+  layout: vertical
+  canvas: auto
+  routing: orthogonal
+  title: Lưu đồ thuật toán tổng thể
+  description: >-
+    Overall algorithm flowchart — measurement, LSTM-TCN forecast, PMS/DR decision, MPC optimization, actuation, and
+    horizon update
+modules:
+  - id: measurement
+    label: LỚP ĐO LƯỜNG
+  - id: forecast
+    label: LỚP DỰ BÁO LSTM-TCN
+  - id: decision
+    label: LỚP RA QUYẾT ĐỊNH
+  - id: mpc_layer
+    label: LỚP MPC
+  - id: actuation
+    label: LỚP CHẤP HÀNH
+  - id: update
+    label: CẬP NHẬT
+nodes:
+  - id: sensors
+    label: |-
+      Cảm biến:
+      Vpv, Ipv, Vbat, Ibat,
+      Iwind, VDC, SOC
+    type: service
+    module: measurement
+  - id: lstm
+    label: LSTM-TCN Model
+    type: service
+    module: forecast
+  - id: forecast_data
+    label: |-
+      Dự báo:
+      ĜHI, T̂emp, Ŵspd,
+      L̂oad, P̂rice
+    type: service
+    module: forecast
+  - id: pms
+    label: |-
+      Power Management System
+      6 modes M1–M6
+    type: service
+    module: decision
+  - id: dr_logic
+    label: |-
+      DR Logic 2 lớp
+      Price + Threshold
+    type: service
+    module: decision
+  - id: ref_currents
+    label: Tính Reference Currents
+    type: service
+    module: decision
+  - id: sigmoid
+    label: Sigmoid Integration
+    type: service
+    module: decision
+  - id: ltv_model
+    label: |-
+      Cập nhật LTV Model
+      (A, B matrices)
+    type: service
+    module: mpc_layer
+  - id: qp_formulate
+    label: |-
+      Formulate QP
+      H, f, Aineq, l, u
+    type: service
+    module: mpc_layer
+  - id: osqp_solver
+    label: |-
+      OSQP Solver
+      min ½zᵀHz + fᵀz
+    type: service
+    module: mpc_layer
+  - id: check
+    label: Feasible?
+    type: decision
+    module: mpc_layer
+  - id: duty_cycles
+    label: |-
+      Duty Cycles
+      UPV, Ubat, Uwind
+    type: service
+    module: actuation
+  - id: soft_constraints
+    label: |-
+      Soft Constraints
+      Thêm slack ε
+    type: service
+    module: actuation
+  - id: shift
+    label: k = k + 1
+    type: service
+    module: update
+  - id: store
+    label: |-
+      Lưu trạng thái
+      ref_prev, Uprev
+    type: service
+    module: update
+edges:
+  - from: sensors
+    to: lstm
+    type: primary
+    label: Dữ liệu đo
+  - from: sensors
+    to: pms
+    type: primary
+    label: Trạng thái
+  - from: lstm
+    to: forecast_data
+    type: primary
+  - from: forecast_data
+    to: pms
+    type: primary
+    label: Dự báo
+  - from: forecast_data
+    to: dr_logic
+    type: primary
+    label: Dự báo
+  - from: pms
+    to: ref_currents
+    type: primary
+  - from: dr_logic
+    to: ref_currents
+    type: primary
+  - from: ref_currents
+    to: sigmoid
+    type: primary
+  - from: sigmoid
+    to: ltv_model
+    type: primary
+  - from: ltv_model
+    to: qp_formulate
+    type: primary
+  - from: qp_formulate
+    to: osqp_solver
+    type: primary
+  - from: osqp_solver
+    to: check
+    type: primary
+  - from: check
+    to: duty_cycles
+    type: primary
+    label: 'Yes'
+  - from: check
+    to: soft_constraints
+    type: primary
+    label: 'No'
+  - from: soft_constraints
+    to: qp_formulate
+    type: primary
+    style: dashed
+    label: Thư giãn ràng buộc
+  - from: duty_cycles
+    to: shift
+    type: primary
+  - from: shift
+    to: store
+    type: primary
+  - from: store
+    to: sensors
+    type: primary
+    style: dashed
+    label: Vòng lặp k → k+1
